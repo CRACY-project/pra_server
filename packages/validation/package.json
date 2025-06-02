@@ -1,0 +1,27 @@
+{
+    "name": "@cracy/validation",
+    "version": "1.0.0",
+    "private": true,
+    "description": "shared types",
+    "license": "MIT",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist/**"
+    ],
+    "scripts": {
+        "build": "tsup",
+        "build:watch": "tsup --watch",
+        "dev": "tsup --watch"
+    },
+    "dependencies": {
+        "class-transformer": "^0.5.1"
+    },
+    "devDependencies": {
+        "class-validator": "^0.14.0",
+        "reflect-metadata": "^0.2.2",
+        "tsup": "^8.4.0",
+        "typescript": "^5.8.2"
+    }
+}

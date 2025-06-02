@@ -1,0 +1,19 @@
+{
+    "$schema": "https://github.com/OpenAPITools/openapi-generator-cli/raw/refs/tags/v2.16.3/apps/generator-cli/src/config.schema.json",
+    "spaces": 4,
+    "generator-cli": {
+        "version": "7.0.1",
+        "useDocker": true,
+        "generators": {
+            "typescript": {
+                "generatorName": "typescript-fetch",
+                "output": "src",
+                "inputSpec": "../../apps/api/swagger.json",
+                "additionalProperties": {
+                    "enumNameSuffix": "",
+                    "enumPropertyNaming": "original"
+                }
+            }
+        }
+    }
+}

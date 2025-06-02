@@ -1,0 +1,49 @@
+{
+    "name": "eslint-plugin-cracy",
+    "version": "0.1.0",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "type": "commonjs",
+    "scripts": {
+        "test": "node --experimental-vm-modules node_modules/.bin/jest",
+        "build": "tsc -d -p tsconfig.json"
+    },
+    "files": [
+        "lib"
+    ],
+    "dependencies": {
+        "@typescript-eslint/rule-tester": "^8.26.0",
+        "eslint": "^9.22.0",
+        "ts-node": "^9.1.0",
+        "typescript": "^5.8.2"
+    },
+    "devDependencies": {
+        "@types/eslint": "^9.6.1",
+        "@types/jest": "^29.5.12",
+        "@types/node": "^22.13.10",
+        "@typescript-eslint/rule-tester": "^8.26.0",
+        "@typescript-eslint/types": "^8.26.0",
+        "@typescript-eslint/typescript-estree": "^8.26.0",
+        "@typescript-eslint/utils": "^8.26.0",
+        "eslint-doc-generator": "^2.1.0",
+        "jest": "^29.7.0",
+        "ts-jest": "^29.1.2"
+    },
+    "jest": {
+        "testTimeout": 120000,
+        "moduleFileExtensions": [
+            "js",
+            "json",
+            "ts"
+        ],
+        "rootDir": "src",
+        "testRegex": ".*\\.test\\.ts$",
+        "transform": {
+            "^.+\\.(t|j)s$": "ts-jest"
+        },
+        "collectCoverageFrom": [
+            "**/*.(t|j)s"
+        ],
+        "testEnvironment": "node"
+    }
+}

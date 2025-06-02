@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "target": "es2020",
+        "module": "Node16",
+        "lib": ["es2017", "dom", "es6"],
+        "typeRoots": ["./node_modules/@types"],
+        "strict": true,
+        "noImplicitAny": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "allowSyntheticDefaultImports": true,
+        "noEmit": false,
+        "outDir": "lib",
+        "sourceMap": true,
+        "skipLibCheck": true,
+        "esModuleInterop": false
+    },
+    "include": ["src/**/*.ts"]
+}

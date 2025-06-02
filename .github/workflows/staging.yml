@@ -1,0 +1,97 @@
+name: Deploy Staging environment
+
+on:
+    push:
+        tags: ['v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+']
+    workflow_dispatch:
+
+jobs:
+    build_backend:
+        uses: ./.github/workflows/build-backend.yml
+        with:
+            IMAGE_NAME: ghcr.io/jimbersoftware/pde-risk-analyzer/backend
+            REGISTRY: ghcr.io
+            TAG: ${{ github.ref_name }}
+        secrets: inherit
+
+    build_frontend:
+        needs:
+            - build_backend
+        uses: ./.github/workflows/build-frontend.yml
+        with:
+            IMAGE_NAME: ghcr.io/jimbersoftware/pde-risk-analyzer/frontend
+            REGISTRY: ghcr.io
+            TAG: ${{ github.ref_name }}
+            AZURE_AUTH_AUDIENCE: ${{ vars.AZURE_AUTH_AUDIENCE }}
+            GOOGLE_AUTH_CLIENT_ID: ${{ vars.GOOGLE_AUTH_CLIENT_ID }}
+        secrets: inherit
+
+    pull_images:
+        runs-on: [signal-server-multi-env]
+        needs:
+            - build_frontend
+            - build_backend
+        env:
+            FRONTEND_IMAGE: ghcr.io/jimbersoftware/pde-risk-analyzer/frontend:${{ github.ref_name }}
+            BACKEND_IMAGE: ghcr.io/jimbersoftware/pde-risk-analyzer/backend:${{ github.ref_name }}
+        steps:
+            - name: Login to GHCR
+              uses: docker/login-action@v3.1.0
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+                  logout: false
+            - uses: actions/checkout@v4.1.1
+              with:
+                  sparse-checkout: |
+                      docker-compose.yml
+                  sparse-checkout-cone-mode: false
+            - name: Pull
+              run: docker compose pull
+
+    install_dependencies:
+        runs-on: [signal-server-multi-env]
+        needs:
+            - pull_images
+        env:
+            MARIADB_ROOT_PASSWORD: ${{ secrets.MULTI_PRA_DATABASE_PASSWORD }}
+        steps:
+            - uses: actions/checkout@v4.1.1
+              with:
+                  sparse-checkout: |
+                      docker-compose.dependencies.yml
+                  sparse-checkout-cone-mode: false
+            - name: create networks
+              run: docker network create cracy-pra-dependencies || true
+            - name: pull dependencies
+              run: docker compose -f docker-compose.dependencies.yml pull
+            - name: start dependencies
+              run: docker compose -f docker-compose.dependencies.yml up -d
+
+    deploy:
+        runs-on: [signal-server-multi-env]
+        needs:
+            - pull_images
+            - install_dependencies
+        env:
+            FRONTEND_IMAGE: ghcr.io/jimbersoftware/pde-risk-analyzer/frontend:${{ github.ref_name }}
+            BACKEND_IMAGE: ghcr.io/jimbersoftware/pde-risk-analyzer/backend:${{ github.ref_name }}
+            BACKEND_URL: /
+            DATABASE_NAME: pra-staging
+            DATABASE_PASSWORD: ${{ secrets.MULTI_PRA_DATABASE_PASSWORD }}
+            AZURE_AUTH_AUDIENCE: ${{ vars.AZURE_AUTH_AUDIENCE }}
+            AZURE_AUTH_JWKS_URI: https://login.microsoftonline.com/common/discovery/v2.0/keys
+            JWT_ACCESS_TOKEN_SECRET: ${{ secrets.JWT_ACCESS_TOKEN_SECRET }}
+            JWT_ACCESS_TOKEN_EXPIRATION_TIME: ${{ vars.JWT_ACCESS_TOKEN_EXPIRATION_TIME }}
+            JWT_REFRESH_TOKEN_SECRET: ${{ secrets.JWT_REFRESH_TOKEN_SECRET }}
+            JWT_REFRESH_TOKEN_EXPIRATION_TIME: ${{ vars.JWT_REFRESH_TOKEN_EXPIRATION_TIME }}
+            ENVIRONMENT: staging
+        steps:
+            - uses: actions/checkout@v4.1.1
+              with:
+                  sparse-checkout: |
+                      docker-compose.yml
+                  sparse-checkout-cone-mode: false
+            - name: Deploy
+              run: docker compose -p staging -f docker-compose.yml up -d

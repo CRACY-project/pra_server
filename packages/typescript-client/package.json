@@ -1,0 +1,27 @@
+{
+    "name": "@cracy/typescript-client",
+    "version": "1.0.0",
+    "description": "OpenAPI client for cracy pde api",
+    "author": "OpenAPI-Generator",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "tsup",
+        "prepare": "npm run build",
+        "generate": "JAVA_OPTS='-Dlog.level=warn' openapi-generator-cli generate",
+        "build:watch": "onchange --await-write-finish 2000 -i '../../apps/api/swagger.json' -- yarn generateAndBuild",
+        "generateAndBuild": "yarn generate && yarn build",
+        "dev": "yarn build:watch"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "devDependencies": {
+        "@cracy/api": "workspace:*",
+        "@openapitools/openapi-generator-cli": "^2.16.3",
+        "onchange": "^7.1.0",
+        "tsup": "^8.4.0",
+        "typescript": "^5.8.2"
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "version": "1.0.0",
+    "name": "@cracy/database",
+    "private": true,
+    "dependencies": {
+        "@prisma/client": "^6.3.1"
+    },
+    "devDependencies": {
+        "esbuild": "^0.25.0",
+        "prisma": "^6.3.1",
+        "tsup": "^8.4.0"
+    },
+    "scripts": {
+        "build": "tsup && cp prisma/schema.prisma dist/schema.prisma",
+        "db:generate": "prisma generate",
+        "db:push": "prisma db push --skip-generate",
+        "db:migrate-dev": "prisma migrate dev",
+        "db:migrate-prod": "prisma migrate deploy",
+        "db:reset": "node ./src/clearDB.js",
+        "bundle-prisma": "yarn esbuild --outfile=dist/index.js --format=cjs --bundle --tree-shaking=true src/index.ts"
+    },
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "files": [
+        "dist/**"
+    ]
+}

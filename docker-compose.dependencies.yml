@@ -1,0 +1,34 @@
+services:
+    adminer:
+        image: adminer
+        container_name: pra-adminer
+        restart: always
+        environment:
+            - ADMINER_DEFAULT_SERVER=pra-dbms
+        networks:
+            - pra-dependencies
+            - proxy
+
+    pra-dbms:
+        image: mariadb:latest
+        container_name: pra-dbms
+        restart: always
+        environment:
+            - MARIADB_ROOT_PASSWORD
+        volumes:
+            - database:/var/lib/mysql
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            timeout: 10s
+            retries: 10
+        networks:
+            - pra-dependencies
+
+volumes:
+    database:
+
+networks:
+    proxy:
+        external: true
+    pra-dependencies:
+        external: true

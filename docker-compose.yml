@@ -1,0 +1,51 @@
+services:
+    pra-frontend:
+        image: ${FRONTEND_IMAGE}
+        depends_on:
+            - pra-backend
+        restart: always
+        networks:
+            - pra-network
+            - proxy
+        labels:
+            - pra.environment=${ENVIRONMENT:-placeholder}
+    pra-backend:
+        environment:
+            - ENVIRONMENT=${ENVIRONMENT:-placeholder}
+            - SESSION_SECRET
+            - AZURE_AUTH_JWKS_URI
+            - AZURE_AUTH_AUDIENCE
+            - GOOGLE_AUTH_CLIENT_ID
+            - GOOGLE_AUTH_CLIENT_SECRET
+            - JWT_ACCESS_TOKEN_SECRET
+            - JWT_ACCESS_TOKEN_EXPIRATION_TIME
+            - JWT_REFRESH_TOKEN_SECRET
+            - JWT_REFRESH_TOKEN_EXPIRATION_TIME
+            - DATABASE_URL=mysql://root:${DATABASE_PASSWORD:-placeholder}@pra-dbms:3306/${DATABASE_NAME:-placeholder}?schema=public
+            - DATABASE_HOST=pra-dbms
+            - DATABASE_PORT=3306
+            - PREVIEW_ENVIRONMENT
+        image: ${BACKEND_IMAGE}
+        restart: always
+        healthcheck:
+            test: ['CMD', 'nc', '-zv', 'localhost', '3001']
+            timeout: 10s
+            retries: 10
+            interval: 5s
+        networks:
+            - pra-network
+            - pra-dependencies
+            - proxy
+        labels:
+            - pra.environment=${ENVIRONMENT:-placeholder}
+
+volumes:
+    db_data_testing:
+    app_files:
+
+networks:
+    proxy:
+        external: true
+    pra-dependencies:
+        external: true
+    pra-network:

@@ -1,0 +1,32 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "ui": "tui",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^db:generate", "^build", "generate"],
+            "inputs": ["$TURBO_DEFAULT$", ".env*"]
+        },
+        "generate": {
+            "dependsOn": ["^generate", "^build"]
+        },
+        "lint": {
+            "dependsOn": ["^lint"]
+        },
+        "check-types": {
+            "dependsOn": ["^check-types"]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true,
+            "dependsOn": ["^db:generate"]
+        },
+        "typescript-client:generate": {
+            "cache": false,
+            "dependsOn": ["generate:swagger"]
+        },
+        "seed": {
+            "cache": false
+        },
+        "db:generate": {}
+    }
+}

@@ -1,0 +1,154 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "debian-openssl-3.0.x"]
+
+  previewFeatures = ["views", "relationJoins"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  displayName String      @map("display_name")
+  companyType CompanyType @default(CUSTOMER) @map("company_type")
+  users       User[]
+  userRoles   UserRole[]
+  tags        Tag[]
+  pdes        PDE[]
+
+  @@map("company")
+}
+
+model Tag {
+  id        Int    @id @default(autoincrement())
+  name      String
+  companyId Int    @map("company_id")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  PDE     PDE?    @relation(fields: [pDEId], references: [id])
+  pDEId   Int?
+
+  @@unique([name, companyId])
+  @@map("tag")
+}
+
+model User {
+  id                 Int                   @id @default(autoincrement())
+  email              String                @unique(map: "user_user_id_key")
+  companyId          Int                   @map("company_id")
+  authenticationType AuthenticationType    @map("authentication_type")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @default(now()) @updatedAt @map("updated_at")
+  company            Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userRoles          UserRole[]
+  platformRole       PlatformUserRoleValue @default(USER) @map("platform_role")
+  disabled           Boolean               @default(false) @map("disabled")
+  RefreshToken       RefreshToken[]
+  oneTimePassword    OneTimePassword?
+
+  @@index([companyId], map: "user_company_id_fkey")
+  @@map("user")
+}
+
+model RefreshToken {
+  id                        Int      @id @default(autoincrement())
+  userId                    Int      @map("user_id")
+  currentHashedRefreshToken String?  @unique(map: "current_hashed_refresh_token")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "refresh_token_user_id_fkey")
+  @@map("refresh_token")
+}
+
+model OneTimePassword {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique @map("user_id")
+  otp            String   @unique
+  createdAt      DateTime @default(now()) @map("created_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  failedAttempts Int      @default(0) @map("failed_attempts")
+
+  @@index([userId], map: "otp_user_id_fkey")
+  @@map("one_time_password")
+}
+
+model UserRole {
+  id        Int                  @id @default(autoincrement())
+  value     UserCompanyRoleValue @default(USER)
+  userId    Int                  @map("user_id")
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade, map: "role_user_id_fkeyk")
+  companyId Int                  @map("company_id")
+  company   Company              @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "role_company_id_fkey")
+
+  @@unique([value, userId, companyId])
+  @@index([userId], map: "role_user_id_value_key")
+  @@map("user_role")
+}
+
+model PDE {
+  id           Int           @id @default(autoincrement())
+  name         String
+  companyId    Int           @map("company_id")
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  token        String        @unique @map("token")
+  tags         Tag[]
+  serialNumber String        @map("serial_number")
+  lastSeen     DateTime      @map("last_seen")
+  systemInfo   SystemInfo[]
+  libraryInfo  LibraryInfo[]
+
+  @@unique([name, companyId], map: "name")
+  @@unique([serialNumber, companyId], map: "serial_number")
+  @@index([companyId], map: "pde_company_id_fkey")
+  @@map("pde")
+}
+
+model SystemInfo {
+  id        Int      @id @default(autoincrement())
+  data      Json     @map("data")
+  timestamp DateTime @default(now())
+  pdeId     Int      @map("pde_id")
+
+  pde PDE @relation(fields: [pdeId], references: [id], onDelete: Cascade)
+
+  @@map("system_info")
+}
+
+model LibraryInfo {
+  id        Int      @id @default(autoincrement())
+  data      Json     @map("data")
+  timestamp DateTime @default(now())
+  pdeId     Int      @map("pde_id")
+
+  pde PDE @relation(fields: [pdeId], references: [id], onDelete: Cascade)
+
+  @@map("library_info")
+}
+
+enum AuthenticationType {
+  LOCAL
+  UNCLAIMED
+  GOOGLE
+  AZUREAD
+  EMAIL
+}
+
+enum CompanyType {
+  SUPERCOMPANY
+  CUSTOMER
+}
+
+enum UserCompanyRoleValue {
+  USER
+  COMPANYADMIN
+}
+
+enum PlatformUserRoleValue {
+  SUPERADMIN
+  USER
+}

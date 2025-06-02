@@ -1,0 +1,65 @@
+name: Reusable Frontend Build
+on:
+    workflow_call:
+        inputs:
+            IMAGE_NAME:
+                required: true
+                type: string
+            REGISTRY:
+                required: true
+                type: string
+            TAG:
+                required: true
+                type: string
+            AZURE_AUTH_AUDIENCE:
+                required: true
+                type: string
+            GOOGLE_AUTH_CLIENT_ID:
+                required: true
+                type: string
+
+jobs:
+    build:
+        runs-on: [jack, self-hosted]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4.1.1
+
+            - id: image
+              uses: ASzc/change-string-case-action@v6
+              with:
+                  string: ${{ github.repository }}
+
+            - name: Write environment.json
+              env:
+                  BRANCH: ${{ github.ref_name }}
+                  SHA: ${{ github.sha }}
+                  TAG: ${{ github.ref_name }}
+              run: |
+                  node scripts/write-environment.js
+
+            - name: Login to ghrc.io
+              uses: docker/login-action@v3.1.0
+              with:
+                  registry: ${{ inputs.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+                  logout: false
+
+            - name: Extract metadata for Docker
+              id: meta
+              uses: docker/metadata-action@v5.5.1
+              with:
+                  images: ${{ inputs.IMAGE_NAME }}
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v5.3.0
+              with:
+                  build-args: |
+                      VITE_AZURE_AUTH_AUDIENCE=${{ inputs.AZURE_AUTH_AUDIENCE }}
+                      VITE_GOOGLE_AUTH_CLIENT_ID=${{ inputs.GOOGLE_AUTH_CLIENT_ID }}
+                  context: .
+                  file: apps/web/Dockerfile
+                  push: true
+                  tags: ${{ inputs.IMAGE_NAME }}:${{ inputs.TAG}}
+                  labels: ${{ steps.meta.outputs.labels }}

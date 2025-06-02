@@ -1,0 +1,56 @@
+version: '3'
+services:
+    adminer:
+        image: adminer
+        container_name: cracy-development-adminer
+        restart: always
+        ports:
+            - 8081:8080
+        environment:
+            - ADMINER_DEFAULT_SERVER=cracy-db
+        networks:
+            - cracy-development-network
+
+    cracy-development-db:
+        image: mariadb:latest
+        container_name: cracy-development-dbms
+        ports:
+            - 3306:3306
+        restart: always
+        environment:
+            - MARIADB_ROOT_PASSWORD=root
+            - MARIADB_DATABASE=cracy-db
+            - DATABASE_HOST=cracy-development-db
+            - DATABASE_PORT=3306
+        volumes:
+            - db_data_development:/var/lib/mysql
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            timeout: 10s
+            retries: 10
+        networks:
+            - cracy-development-network
+
+    pdf-service:
+        image: lucasgaitzsch/pdf-turtle
+        container_name: pdf-service
+        ports:
+            - 3002:8000
+        restart: always
+        networks:
+            - cracy-development-network
+        environment:
+            - LOG_JSON_OUTPUT=true
+            - LOG_LEVEL_DEBUG=true
+
+    mailing-service:
+        image: maildev/maildev
+        container_name: mailing-service
+        ports:
+            - 1080:1080
+            - 1025:1025
+
+volumes:
+    db_data_development:
+networks:
+    cracy-development-network:
